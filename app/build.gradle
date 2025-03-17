@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
+}
+
+group = 'com.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+application {
+    mainClass = 'java_app.App'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'java_app.App'
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Task to create an executable distribution
+task createDistribution(type: Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into "${buildDir}/distribution"
+    rename { String fileName ->
+        fileName.replace("-${version}", "")
+    }
+}
+
+// Task to create a zip distribution
+task zipDistribution(type: Zip) {
+    dependsOn createDistribution
+    archiveFileName = "MyJavaApp-${version}.zip"
+    destinationDirectory = file("${buildDir}/distributions")
+    from "${buildDir}/distribution"
+}
+
+build.dependsOn zipDistribution
